@@ -1,8 +1,5 @@
 -- Initialize quizapp_db database and tables
--- Run this in Railway Query Editor or via init script
-
--- Use the database
-USE quizapp_db;
+-- Tables are created in the current database (set by connection)
 
 -- Drop tables in reverse order to avoid FK constraint errors
 DROP TABLE IF EXISTS QuizUserAnswers;
