@@ -39,7 +39,7 @@ const initDatabase = async () => {
             console.log('Database is empty, initializing tables...');
             
             // Read and execute the SQL script
-            const sqlPath = path.join(__dirname, '..', 'db script.txt');
+            const sqlPath = path.join(__dirname, 'init.sql');
             if (fs.existsSync(sqlPath)) {
                 let sql = fs.readFileSync(sqlPath, 'utf8');
                 
