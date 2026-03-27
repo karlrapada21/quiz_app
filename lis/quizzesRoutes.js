@@ -3,15 +3,32 @@ const router = express.Router();
 const mysql = require('mysql2');
 require('dotenv').config();
 
-const pool = mysql.createPool({
-  host: process.env.DB_HOST || 'localhost',
-  user: process.env.DB_USER || 'root',
-  password: process.env.DB_PASSWORD || '',
-  database: process.env.DB_NAME || 'quizapp_db',
-  waitForConnections: true,
-  connectionLimit: 10,
-  queueLimit: 0
-}).promise();
+// Support Railway's MySQL connection format (same as db.js)
+const getDbConfig = () => {
+    if (process.env.MYSQL_URL) {
+        console.log("quizzesRoutes: Using Railway MYSQL_URL");
+        const url = new URL(process.env.MYSQL_URL);
+        return {
+            host: url.hostname,
+            user: url.username,
+            password: url.password,
+            database: url.pathname.replace('/', '') || 'railway',
+            port: parseInt(url.port) || 3306,
+            ssl: { rejectUnauthorized: false }
+        };
+    }
+    const config = {
+        host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
+        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
+        database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'quizapp_db',
+        port: process.env.MYSQLPORT || 3306
+    };
+    console.log(`quizzesRoutes: Using database: ${config.database}`);
+    return config;
+};
+
+const pool = mysql.createPool(getDbConfig()).promise();
 
 // GET /api/quizzes/questions?quiz=Quiz+Name
 router.get('/questions', async (req, res) => {
@@ -82,7 +99,6 @@ router.get('/questions/:id', async (req, res) => {
 });
 
 // POST /api/quizzes/questions  (admin) -> create question
-// body: { QuizName, QuestionText, Options (array|null), Answer (value|array|null), QuestionType, TotalPoints, QuestionOrder }
 router.post('/questions', async (req, res) => {
   const { QuizName, QuestionText, Options, Answer, QuestionType = 'open-ended', TotalPoints = 1, QuestionOrder = 0 } = req.body;
   if (!QuizName || !QuestionText) return res.status(400).json({ error: 'QuizName and QuestionText required' });
