@@ -7,11 +7,11 @@ require('dotenv').config();
 const getDbConfig = () => {
     // For Railway with MYSQL_URL
     if (process.env.MYSQL_URL) {
-        // Parse the URL to extract database name for separate connection
+        // Parse the URL to extract database name
         const url = new URL(process.env.MYSQL_URL);
         return {
             uri: process.env.MYSQL_URL,
-            database: url.pathname.replace('/', '') || 'railway' // Extract DB name from URL
+            database: url.pathname.replace('/', '') || 'railway'
         };
     }
     return {
@@ -31,7 +31,7 @@ const initDatabase = async () => {
     
     // Create connection based on config type
     if (dbConfig.uri) {
-        // Railway: Use URI directly - Railway database is already created and included in URL
+        // Railway: Use URI directly
         connection = mysql.createConnection({ uri: dbConfig.uri, multipleStatements: true });
         dbName = dbConfig.database;
         console.log('Connecting to Railway MySQL database:', dbName);
@@ -41,53 +41,56 @@ const initDatabase = async () => {
         delete tempConfig.database;
         connection = mysql.createConnection(tempConfig);
         dbName = dbConfig.database;
-        
-        // Create database if not exists (only for local)
-        try {
-            await connection.promise().query(`CREATE DATABASE IF NOT EXISTS \`${dbName}\``);
-            console.log(`Database '${dbName}' ensured.`);
-        } catch (err) {
-            console.error('Error creating database:', err.message);
-        }
-        
-        // Switch to the database
-        await connection.promise().query(`USE \`${dbName}\``);
     }
     
     try {
-        // Check if tables exist in this database
+        // Get the actual database name from the connection
+        const [dbRows] = await connection.promise().query('SELECT DATABASE() as current_db');
+        const actualDbName = dbRows[0].current_db;
+        console.log('Actual database name:', actualDbName);
+        
+        // Check if tables exist - query using actual database name
         const [rows] = await connection.promise().query(
-            `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ?`,
-            [dbName]
+            `SELECT COUNT(*) as count FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE'`,
+            [actualDbName]
         );
+        
+        console.log(`Found ${rows[0].count} tables in database '${actualDbName}'`);
         
         if (rows[0].count === 0) {
             console.log('Database is empty, initializing tables...');
             
             // Read and execute the SQL script
             const sqlPath = path.join(__dirname, 'init.sql');
+            console.log('Looking for SQL file at:', sqlPath);
+            
             if (fs.existsSync(sqlPath)) {
                 let sql = fs.readFileSync(sqlPath, 'utf8');
+                console.log('SQL file found, executing...');
                 
-                // Clean up the SQL - remove comments and handle multiple statements
-                sql = sql.replace(/--.*$/gm, ''); // Remove line comments
-                
-                const statements = sql.split(';').filter(s => s.trim());
-                
-                for (const statement of statements) {
-                    if (statement.trim()) {
-                        await connection.promise().query(statement);
-                    }
+                try {
+                    // Execute the entire SQL script at once (multipleStatements is enabled)
+                    await connection.promise().query(sql);
+                    console.log('Database initialized successfully!');
+                } catch (sqlErr) {
+                    console.error('SQL execution error:', sqlErr.message);
+                    throw sqlErr;
                 }
-                console.log('Database initialized successfully!');
             } else {
-                console.log('No SQL script found, skipping initialization');
+                console.error('No SQL script found at:', sqlPath);
             }
         } else {
-            console.log(`Database already has ${rows[0].count} tables`);
+            console.log(`Database already has ${rows[0].count} tables, skipping initialization`);
+            // List existing tables for debugging
+            const [tables] = await connection.promise().query(
+                `SELECT table_name FROM information_schema.tables WHERE table_schema = ?`,
+                [actualDbName]
+            );
+            tables.forEach(t => console.log('  -', t.TABLE_NAME));
         }
     } catch (err) {
         console.error('Database initialization error:', err.message);
+        console.error('Stack:', err.stack);
     } finally {
         connection.end();
     }
