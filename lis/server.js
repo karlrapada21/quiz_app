@@ -6,8 +6,10 @@ const { initDatabase } = require("./dbInit");
 
 const app = express();
 
-// Initialize database tables on startup
-initDatabase();
+// Health check endpoint for Railway
+app.get("/health", (_req, res) => {
+  res.status(200).json({ status: "ok", timestamp: new Date().toISOString() });
+});
 
 app.use(cors());
 
@@ -60,4 +62,21 @@ app.get("*", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8000;
-app.listen(PORT, () => console.log(`Server running on port ${PORT}`));
+
+// Initialize database before starting server
+const startServer = async () => {
+  try {
+    // Initialize database tables
+    await initDatabase();
+    
+    // Start server
+    app.listen(PORT, () => {
+      console.log(`Server running on port ${PORT}`);
+    });
+  } catch (err) {
+    console.error('Failed to start server:', err.message);
+    process.exit(1);
+  }
+};
+
+startServer();

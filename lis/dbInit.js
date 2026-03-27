@@ -88,9 +88,13 @@ const initDatabase = async () => {
             );
             tables.forEach(t => console.log('  -', t.TABLE_NAME));
         }
+        
+        // Return success status
+        return true;
     } catch (err) {
         console.error('Database initialization error:', err.message);
         console.error('Stack:', err.stack);
+        throw err; // Re-throw to signal failure
     } finally {
         connection.end();
     }

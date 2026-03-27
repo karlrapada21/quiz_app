@@ -5,6 +5,7 @@
 SET FOREIGN_KEY_CHECKS = 0;
 
 -- Drop tables in reverse order to avoid FK constraint errors
+-- Only drop if they exist to avoid errors on fresh databases
 DROP TABLE IF EXISTS quizuseranswers;
 DROP TABLE IF EXISTS quizscores;
 DROP TABLE IF EXISTS passwordresettokens;
