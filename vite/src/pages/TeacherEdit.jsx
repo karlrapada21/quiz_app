@@ -27,7 +27,7 @@ function TeacherEdit() {
 
     const loadUser = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/users/viewuser/${userId}`, getAuthConfig());
+        const res = await axios.get(`/api/users/viewuser/${userId}`, getAuthConfig());
         const user = res.data?.user || res.data || {};
         setForm({
           FirstName: user.FirstName || "",
@@ -65,7 +65,7 @@ function TeacherEdit() {
     setError("");
     try {
       await axios.put(
-        `http://localhost:8000/api/users/updateuser/${userId}`,
+        `/api/users/updateuser/${userId}`,
         form,
         getAuthConfig()
       );

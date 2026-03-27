@@ -18,7 +18,7 @@ function ResetPassword() {
     try {
       // support optional active session headers (no harm if none)
       await axios.post(
-        "http://localhost:8000/api/users/resetpassword",
+        "/api/users/resetpassword",
         { token, newPassword },
         getAuthConfig()
       );

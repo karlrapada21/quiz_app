@@ -51,7 +51,7 @@ function TeacherProfile() {
     }
 
     axios
-      .get(`http://localhost:8000/api/users/viewuser/${teacherId}`, getAuthConfig())
+      .get(`/api/users/viewuser/${teacherId}`, getAuthConfig())
       .then((res) => {
         const user = res.data?.user || res.data?.results?.[0] || res.data || null;
         setProfile(user);

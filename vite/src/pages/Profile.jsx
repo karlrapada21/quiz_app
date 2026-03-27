@@ -32,7 +32,7 @@ function Profile() {
     const userId = decoded?.UserID || decoded?.userId || decoded?.id;
 
     if (userId) {
-      axios.get(`http://localhost:8000/api/users/viewuser/${userId}`, getAuthConfig())
+      axios.get(`/api/users/viewuser/${userId}`, getAuthConfig())
         .then(res => setProfile(res.data))
         .catch(() => {
           // fallback to minimal profile from session

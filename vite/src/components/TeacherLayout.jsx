@@ -39,7 +39,7 @@ function TeacherLayout() {
       }
 
       axios
-        .get(`http://localhost:8000/api/users/viewuser/${teacherId}`, getAuthConfig())
+        .get(`/api/users/viewuser/${teacherId}`, getAuthConfig())
         .then((res) => {
           const user = res.data || {};
           const name = user.UserName || user.Email || active.userName || 'Teacher';

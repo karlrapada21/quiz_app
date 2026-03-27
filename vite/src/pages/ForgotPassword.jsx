@@ -11,7 +11,7 @@ function ForgotPassword() {
     setMessage('');
     try {
       // include auth config if an active session exists (harmless otherwise)
-      await axios.post('http://localhost:8000/api/users/forgotpassword', { email }, getAuthConfig());
+      await axios.post('/api/users/forgotpassword', { email }, getAuthConfig());
       setMessage('If this email exists, a password reset link has been sent.');
     } catch (err) {
       console.warn('ForgotPassword request failed', err);

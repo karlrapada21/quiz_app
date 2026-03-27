@@ -10,7 +10,7 @@ function TeacherForgotPassword() {
     setMessage("");
     try {
       // unified endpoint - include role for clarity
-      await axios.post("http://localhost:8000/api/users/forgotpassword", { email, role: "teacher" });
+      await axios.post("/api/users/forgotpassword", { email, role: "teacher" });
       setMessage("If this email exists, a password reset link has been sent.");
     } catch (err) {
       console.warn('TeacherForgotPassword request failed', err);

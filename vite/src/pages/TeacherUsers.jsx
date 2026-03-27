@@ -25,7 +25,7 @@ function TeacherUsers() {
 
   const fetchUsers = async () => {
     try {
-      const res = await axios.get("http://localhost:8000/api/users/viewusers", getAuthConfig());
+      const res = await axios.get("/api/users/viewusers", getAuthConfig());
       const data = res.data || {};
       const list = data.results || data.users || [];
       setUsers(Array.isArray(list) ? list : []);
@@ -39,7 +39,7 @@ function TeacherUsers() {
     if (!window.confirm("Are you sure you want to delete this user and all their quiz data?")) return;
     setDeletingId(userId);
     try {
-      await axios.delete(`http://localhost:8000/api/users/deleteuser/${userId}`, getAuthConfig());
+      await axios.delete(`/api/users/deleteuser/${userId}`, getAuthConfig());
       await fetchUsers();
     } catch (err) {
       console.error("Failed to delete user", err?.response?.data || err?.message || err);

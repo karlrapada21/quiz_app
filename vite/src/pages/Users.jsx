@@ -16,7 +16,7 @@ function Users() {
     }
 
     const cfg = getAuthConfig();
-    axios.get('http://localhost:8000/api/users/viewusers', cfg)
+    axios.get('/api/users/viewusers', cfg)
       .then(res => setUsers(res.data.results || []))
       .catch(err => {
         console.error('Failed to load users', err);

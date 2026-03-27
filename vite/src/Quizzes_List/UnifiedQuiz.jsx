@@ -45,7 +45,7 @@ function UnifiedQuiz() {
     const load = async () => {
       try {
         const res = await axios.get(
-          `http://localhost:8000/api/quizzes/questions?quiz=${encodeURIComponent(quizName)}`,
+          `/api/quizzes/questions?quiz=${encodeURIComponent(quizName)}`,
           getAuthConfig()
         );
         if (!mounted) return;
@@ -103,7 +103,7 @@ function UnifiedQuiz() {
   const saveScore = async (finalScore, total) => {
     try {
       await axios.post(
-        'http://localhost:8000/api/quiz_scores/add',
+        '/api/quiz_scores/add',
         {
           QuizName: quizName,
           Score: finalScore,
@@ -126,7 +126,7 @@ function UnifiedQuiz() {
     }
     try {
       await axios.post(
-        'http://localhost:8000/api/quiz_answers/submit',
+        '/api/quiz_answers/submit',
         {
           QuizName: quizName,
           Answers: answersArr,

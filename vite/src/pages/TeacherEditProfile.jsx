@@ -45,7 +45,7 @@ function TeacherEditProfile() {
     }
 
     axios
-      .get(`http://localhost:8000/api/users/viewuser/${teacherId}`, getAuthConfig())
+      .get(`/api/users/viewuser/${teacherId}`, getAuthConfig())
       .then((res) => {
         const user = res.data?.user || res.data || {};
         setFormData({
@@ -85,7 +85,7 @@ function TeacherEditProfile() {
       if (!teacherId) throw new Error("Invalid token");
 
       await axios.put(
-        `http://localhost:8000/api/users/updateuser/${teacherId}`,
+        `/api/users/updateuser/${teacherId}`,
         formData,
         getAuthConfig()
       );

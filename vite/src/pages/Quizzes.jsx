@@ -27,7 +27,7 @@ function Quizzes() {
 
     const fetchQuizList = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/api/quizzes/list', getAuthConfig());
+        const res = await axios.get('/api/quizzes/list', getAuthConfig());
         const links = res.data.quizzes.map(name => ({ to: `/quiz/${encodeURIComponent(name)}`, label: name }));
         setQuizLinks(links);
       } catch (err) {
@@ -38,7 +38,7 @@ function Quizzes() {
 
     const fetchScores = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/api/quiz_scores/myscores', getAuthConfig());
+        const res = await axios.get('/api/quiz_scores/myscores', getAuthConfig());
         const scoreMap = {};
         if (res.data && res.data.scores) {
           res.data.scores.forEach(scoreObj => {
@@ -54,7 +54,7 @@ function Quizzes() {
 
     const fetchAverages = async () => {
       try {
-        const res = await axios.get('http://localhost:8000/api/quiz_scores/averages');
+        const res = await axios.get('/api/quiz_scores/averages');
         const avgMap = {};
         if (res.data && Array.isArray(res.data.averages)) {
           const parseNum = v => {
@@ -127,7 +127,7 @@ function Quizzes() {
     try {
       // prefer quizzes table endpoint for definitions if available
       const qRes = await axios.get(
-        `http://localhost:8000/api/quizzes/questions?quiz=${encodeURIComponent(quizLabel)}`,
+        `/api/quizzes/questions?quiz=${encodeURIComponent(quizLabel)}`,
         getAuthConfig()
       );
       if (qRes?.data) {
@@ -138,7 +138,7 @@ function Quizzes() {
 
       // fallback to quiz_answers preview endpoint
       const res = await axios.get(
-        `http://localhost:8000/api/quiz_answers/user/${encodeURIComponent(quizLabel)}`,
+        `/api/quiz_answers/user/${encodeURIComponent(quizLabel)}`,
         getAuthConfig()
       );
       return res.data.questions || [];

@@ -24,7 +24,7 @@ function Login() {
     setError(null);
     setLoading(true);
     try {
-      const res = await axios.post("http://localhost:8000/api/users/loginuser", formdata);
+      const res = await axios.post("/api/users/loginuser", formdata);
       const token = res.data?.token || res.data?.accessToken || res.data?.data?.token;
       const role = res.data?.role || res.data?.data?.role || "student";
       const userId = res.data?.userId || res.data?.data?.userId || null;

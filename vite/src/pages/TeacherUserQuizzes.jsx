@@ -49,7 +49,7 @@ function TeacherUserQuizzes() {
 
   const refreshAverages = async () => {
     try {
-      const res = await axios.get('http://localhost:8000/api/quiz_scores/averages');
+      const res = await axios.get('/api/quiz_scores/averages');
       const avgMap = {};
       if (res.data && Array.isArray(res.data.averages)) {
         const parseNum = v => {
@@ -94,13 +94,13 @@ function TeacherUserQuizzes() {
     }
 
     axios
-      .get(`http://localhost:8000/api/users/viewuser/${userId}`, getAuthConfig())
+      .get(`/api/users/viewuser/${userId}`, getAuthConfig())
       .then(res => setUser(res.data))
       .catch(() => setUser(null));
 
     const loadScores = async () => {
       try {
-        const res = await axios.get(`http://localhost:8000/api/quiz_scores/user/${userId}`, getAuthConfig());
+        const res = await axios.get(`/api/quiz_scores/user/${userId}`, getAuthConfig());
         const scoreMap = {};
         if (res.data && res.data.scores) {
           res.data.scores.forEach(scoreObj => {
@@ -161,7 +161,7 @@ function TeacherUserQuizzes() {
   const handleCheckOpenEnded = async quizLabel => {
     try {
       const res = await axios.get(
-        `http://localhost:8000/api/quiz_answers/user/${userId}/${encodeURIComponent(quizLabel)}`,
+        `/api/quiz_answers/user/${userId}/${encodeURIComponent(quizLabel)}`,
         getAuthConfig()
       );
 
@@ -198,13 +198,13 @@ function TeacherUserQuizzes() {
 
     try {
       await axios.post(
-        `http://localhost:8000/api/quiz_answers/grade/${openSubmission.answerId}`,
+        `/api/quiz_answers/grade/${openSubmission.answerId}`,
         { Score: numericScore },
         getAuthConfig()
       );
       alert('Score saved!');
 
-      const res = await axios.get(`http://localhost:8000/api/quiz_scores/user/${userId}`, getAuthConfig());
+      const res = await axios.get(`/api/quiz_scores/user/${userId}`, getAuthConfig());
       const scoreMap = {};
       if (res.data && res.data.scores) {
         res.data.scores.forEach(scoreObj => {
@@ -242,7 +242,7 @@ function TeacherUserQuizzes() {
 
     try {
       const res = await axios.get(
-        `http://localhost:8000/api/quizzes/questions?quiz=${encodeURIComponent(quizLabel)}`,
+        `/api/quizzes/questions?quiz=${encodeURIComponent(quizLabel)}`,
         getAuthConfig()
       );
       questions = normalizeQuestionsFromQuizzes(res.data);
@@ -250,7 +250,7 @@ function TeacherUserQuizzes() {
       console.warn('First quiz load attempt failed', err);
       try {
         const res2 = await axios.get(
-          `http://localhost:8000/api/quizzes/${encodeURIComponent(quizLabel)}`,
+          `/api/quizzes/${encodeURIComponent(quizLabel)}`,
           getAuthConfig()
         );
         questions = normalizeQuestionsFromQuizzes(res2.data);
@@ -258,7 +258,7 @@ function TeacherUserQuizzes() {
         console.warn('Second quiz load attempt failed', err2);
         try {
           const fb = await axios.get(
-            `http://localhost:8000/api/quiz_answers/user/${encodeURIComponent(quizLabel)}`,
+            `/api/quiz_answers/user/${encodeURIComponent(quizLabel)}`,
             getAuthConfig()
           );
           questions = normalizeQuestionsFromQuizzes(fb.data);
@@ -271,7 +271,7 @@ function TeacherUserQuizzes() {
 
     try {
       const sres = await axios.get(
-        `http://localhost:8000/api/quiz_answers/user/${userId}/${encodeURIComponent(quizLabel)}`,
+        `/api/quiz_answers/user/${userId}/${encodeURIComponent(quizLabel)}`,
         getAuthConfig()
       );
       if (Array.isArray(sres.data.questions) && sres.data.questions.length > 0) {

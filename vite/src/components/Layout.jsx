@@ -40,7 +40,7 @@ function Layout() {
       }
 
       axios
-        .get(`http://localhost:8000/api/users/viewuser/${userId}`, getAuthConfig())
+        .get(`/api/users/viewuser/${userId}`, getAuthConfig())
         .then((res) => {
           const data = res.data || {};
           setUsername(data.UserName || active.userName || '');
