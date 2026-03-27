@@ -1,12 +1,25 @@
 const express = require("express");
 const cors = require("cors");
 const path = require("path");
+const fs = require("fs");
 
 const app = express();
 app.use(cors());
 
-// Serve static files from the dist folder (built frontend)
-app.use(express.static(path.join(__dirname, "../vite/dist")));
+// Determine where to serve static files from
+const viteDistPath = path.join(__dirname, "../vite/dist");
+const publicPath = path.join(__dirname, "public");
+
+// Use public folder if it exists, otherwise use vite/dist
+let staticPath = viteDistPath;
+if (fs.existsSync(publicPath)) {
+  staticPath = publicPath;
+} else if (!fs.existsSync(viteDistPath) && process.env.NODE_ENV === "production") {
+  console.warn("Static folder not found. Frontend should be built first.");
+}
+
+// Serve static files from the appropriate folder
+app.use(express.static(staticPath));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -38,7 +51,7 @@ app.get("/", (_req, res) => res.send("API running"));
 
 // Serve index.html for any unknown routes (SPA routing)
 app.get("*", (req, res) => {
-  res.sendFile(path.join(__dirname, "../vite/dist/index.html"));
+  res.sendFile(path.join(staticPath, "index.html"));
 });
 
 const PORT = process.env.PORT || 8000;

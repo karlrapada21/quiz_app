@@ -1,0 +1,18 @@
+{
+  "name": "quizapp",
+  "version": "1.0.0",
+  "description": "Quiz App - React + Express + MySQL",
+  "scripts": {
+    "build": "cd vite && npm install && npm run build",
+    "postbuild": "node -e \"const fs=require('fs'), path=require('path'); const src='vite/dist', dest='lis/public'; if(fs.existsSync(src)){fs.cpSync(src, dest, {recursive:true, force:true}); console.log('Copied',src,'to',dest);}\"",
+    "start": "cd lis && npm start"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  },
+  "cacheDirectories": [
+    "node_modules",
+    "lis/node_modules",
+    "vite/node_modules"
+  ]
+}
