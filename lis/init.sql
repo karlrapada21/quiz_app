@@ -73,20 +73,18 @@ SET FOREIGN_KEY_CHECKS = 1;
 INSERT INTO users (Email, UserName, Password, FirstName, MiddleName, LastName, Role)
 VALUES ('hanzdavid2002@gmail.com', 'Teacher1', '$2b$10$MrTpTaHhg5dqqZ5UN4Qd9OGmuU8YGlLp/YH8b8OArbusvAg1GegOC', 'Hanz', 'David', 'Lim', 'teacher');
 
--- Insert sample quizzes
-INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder) VALUES
-('Science Quiz', 'What is photosynthesis?', NULL, '
-    {
-      "type": "open-ended",
-      "text": "Explain the process of photosynthesis in your own words.",
-      "correctAnswer": "Photosynthesis is the process by which plants convert light energy into chemical energy, using chlorophyll and sunlight to transform carbon dioxide and water into glucose and oxygen."
-    }
-  ', 'open-ended', 10, 1),
+-- Insert sample quizzes (separate statements for reliability)
+INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder)
+VALUES ('Science Quiz', 'What is photosynthesis?', NULL, '{"type": "open-ended", "text": "Explain the process of photosynthesis in your own words.", "correctAnswer": "Photosynthesis is the process by which plants convert light energy into chemical energy, using chlorophyll and sunlight to transform carbon dioxide and water into glucose and oxygen."}', 'open-ended', 10, 1);
 
-('Science Quiz', 'Which planet is known as the Red Planet?', '["Venus", "Mars", "Jupiter", "Saturn"]', '"Mars"', 'multiple-choice', 1, 2),
+INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder)
+VALUES ('Science Quiz', 'Which planet is known as the Red Planet?', '["Venus", "Mars", "Jupiter", "Saturn"]', '"Mars"', 'multiple-choice', 1, 2);
 
-('Science Quiz', 'What is the chemical formula for water?', '["CO2", "H2O", "NaCl", "O2"]', '"H2O"', 'multiple-choice', 1, 3),
+INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder)
+VALUES ('Science Quiz', 'What is the chemical formula for water?', '["CO2", "H2O", "NaCl", "O2"]', '"H2O"', 'multiple-choice', 1, 3);
 
-('Science Quiz', 'What is the largest planet in our solar system?', NULL, '"Jupiter"', 'identification', 1, 4),
+INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder)
+VALUES ('Science Quiz', 'What is the largest planet in our solar system?', NULL, '"Jupiter"', 'identification', 1, 4);
 
-('Science Quiz', 'The Sun is a star. True or False?', '["True", "False"]', '"True"', 'true-false', 1, 5);
+INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder)
+VALUES ('Science Quiz', 'The Sun is a star. True or False?', '["True", "False"]', '"True"', 'true-false', 1, 5);
