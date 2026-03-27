@@ -2,8 +2,13 @@ const express = require("express");
 const cors = require("cors");
 const path = require("path");
 const fs = require("fs");
+const { initDatabase } = require("./dbInit");
 
 const app = express();
+
+// Initialize database tables on startup
+initDatabase();
+
 app.use(cors());
 
 // Determine where to serve static files from
