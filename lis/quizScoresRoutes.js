@@ -43,7 +43,7 @@ router.get('/questions', (req, res) => {
   const quizName = req.query.quiz;
   if (!quizName) return res.status(400).json({ error: 'quiz query param required' });
 
-  const sql = 'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM Quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC';
+  const sql = 'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC';
   db.query(sql, [quizName], (err, rows) => {
     if (err) {
       console.error('GET /api/quizzes/questions error', err);
@@ -68,7 +68,7 @@ router.get('/questions', (req, res) => {
  */
 router.get('/questions/:id', (req, res) => {
   const id = req.params.id;
-  const sql = 'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM Quizzes WHERE QuizID = ?';
+  const sql = 'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM quizzes WHERE QuizID = ?';
   db.query(sql, [id], (err, rows) => {
     if (err) {
       console.error('GET /api/quizzes/questions/:id error', err);
@@ -97,7 +97,7 @@ router.post('/questions', authMiddleware, roleMiddleware.requireTeacher, (req, r
   const { QuizName, QuestionText, Options, Answer, QuestionType = 'open-ended', TotalPoints = 1, QuestionOrder = 0 } = req.body;
   if (!QuizName || !QuestionText) return res.status(400).json({ error: 'QuizName and QuestionText required' });
 
-  const sql = 'INSERT INTO Quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder) VALUES (?, ?, ?, ?, ?, ?, ?)';
+  const sql = 'INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder) VALUES (?, ?, ?, ?, ?, ?, ?)';
   const optsJson = Options ? JSON.stringify(Options) : null;
   const ansJson = (Answer !== undefined && Answer !== null) ? JSON.stringify(Answer) : null;
   db.query(sql, [QuizName, QuestionText, optsJson, ansJson, QuestionType, TotalPoints, QuestionOrder], (err, result) => {
@@ -122,7 +122,7 @@ router.post('/submit', authMiddleware, roleMiddleware.requireStudent, (req, res)
     if (!userId || !QuizName || !Answers) return res.status(400).json({ error: 'UserID (or auth), QuizName and Answers required' });
 
     // Only insert Answers column because Questions column was removed from DB
-    db.query('INSERT INTO QuizUserAnswers (UserID, QuizName, Answers) VALUES (?, ?, ?)', [userId, QuizName, JSON.stringify(Answers)], (err, result) => {
+    db.query('INSERT INTO quizuseranswers (UserID, QuizName, Answers) VALUES (?, ?, ?)', [userId, QuizName, JSON.stringify(Answers)], (err, result) => {
       if (err) {
         console.error('POST /api/quizzes/submit DB error:', err);
         return res.status(500).json({ error: 'failed to save submission', details: err.message });
@@ -145,7 +145,7 @@ router.post('/add', authMiddleware, roleMiddleware.requireStudent, (req, res) =>
     return res.status(400).json({ error: 'UserID (or auth), QuizName, Score and Total required' });
   }
 
-  const sql = 'INSERT INTO QuizScores (UserID, QuizName, Score, Total) VALUES (?, ?, ?, ?)';
+  const sql = 'INSERT INTO quizscores (UserID, QuizName, Score, Total) VALUES (?, ?, ?, ?)';
   db.query(sql, [userId, QuizName, Score, Total], (err, result) => {
     if (err) {
       console.error('POST /api/quiz_scores/add error', err);
@@ -162,7 +162,7 @@ router.get('/myscores', authMiddleware, (req, res) => {
   const userId = req.user?.UserID || req.query.userId;
   if (!userId) return res.status(200).json({ scores: [] });
 
-  const sql = 'SELECT ScoreID, UserID, QuizName, Score, Total FROM QuizScores WHERE UserID = ? ORDER BY ScoreID DESC';
+  const sql = 'SELECT ScoreID, UserID, QuizName, Score, Total FROM quizscores WHERE UserID = ? ORDER BY ScoreID DESC';
   db.query(sql, [userId], (err, rows) => {
     if (err) {
       console.error('GET /api/quiz_scores/myscores error', err);
@@ -179,7 +179,7 @@ router.get('/user/:userId', authMiddleware, (req, res) => {
   const userId = req.params.userId;
   if (!userId) return res.status(400).json({ error: 'userId required' });
 
-  const sql = 'SELECT ScoreID, UserID, QuizName, Score, Total FROM QuizScores WHERE UserID = ? ORDER BY ScoreID DESC';
+  const sql = 'SELECT ScoreID, UserID, QuizName, Score, Total FROM quizscores WHERE UserID = ? ORDER BY ScoreID DESC';
   db.query(sql, [userId], (err, rows) => {
     if (err) {
       console.error('GET /api/quiz_scores/user/:userId error', err);
@@ -198,7 +198,7 @@ router.get('/averages', (_req, res) => {
            ROUND(AVG(Score),2) AS avgScore,
            ROUND(AVG(Score/NULLIF(Total,0))*100,2) AS avgPercent,
            COUNT(*) AS attempts
-    FROM QuizScores
+    FROM quizscores
     GROUP BY QuizName
     ORDER BY QuizName
   `;

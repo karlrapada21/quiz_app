@@ -16,7 +16,7 @@ try { authMiddleware = require("./authMiddleware"); } catch (e) {
  */
 function fetchQuizQuestions(quizName, cb) {
   const sql = `SELECT QuizID, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints
-               FROM Quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC`;
+               FROM quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC`;
   db.query(sql, [quizName], (err, rows) => {
     if (err) return cb(err);
     const questions = (rows || []).map(r => {
@@ -38,10 +38,10 @@ function fetchQuizQuestions(quizName, cb) {
 }
 
 /**
- * Helper: compute total points from Quizzes table for a quizName
+ * Helper: compute total points from quizzes table for a quizName
  */
 function fetchTotalForQuiz(quizName, cb) {
-  const sql = "SELECT IFNULL(SUM(TotalPoints), 0) AS total FROM Quizzes WHERE QuizName = ?";
+  const sql = "SELECT IFNULL(SUM(TotalPoints), 0) AS total FROM quizzes WHERE QuizName = ?";
   db.query(sql, [quizName], (err, rows) => {
     if (err) return cb(err);
     const total = rows && rows[0] ? Number(rows[0].total) || 0 : 0;
@@ -62,11 +62,11 @@ router.post("/submit", authMiddleware, (req, res) => {
     if (!QuizName || !Answers) return res.status(400).json({ error: "QuizName and Answers required" });
 
     db.query(
-      "INSERT INTO QuizUserAnswers (UserID, QuizName, Answers) VALUES (?, ?, ?)",
+      "INSERT INTO quizuseranswers (UserID, QuizName, Answers) VALUES (?, ?, ?)",
       [user_id, QuizName, JSON.stringify(Answers)],
       (err, result) => {
         if (err) {
-          console.error("DB error insert QuizUserAnswers:", err);
+          console.error("DB error insert quizuseranswers:", err);
           return res.status(500).json({ error: "DB error", details: err.message });
         }
         res.json({ message: "Answers saved", answerId: result.insertId });
@@ -89,13 +89,13 @@ router.get("/user/:quizName", authMiddleware, (req, res) => {
 
   db.query(
     `SELECT AnswerID, Answers, SubmittedAt
-     FROM QuizUserAnswers
+     FROM quizuseranswers
      WHERE UserID = ? AND QuizName = ?
      ORDER BY SubmittedAt DESC LIMIT 1`,
     [user_id, quizName],
     (err, results) => {
       if (err) {
-        console.error("DB error select QuizUserAnswers:", err);
+        console.error("DB error select quizuseranswers:", err);
         return res.status(500).json({ error: "DB error", details: err.message });
       }
       if (!results || !results.length) return res.status(404).json({ error: "No answers found" });
@@ -110,13 +110,13 @@ router.get("/user/:quizName", authMiddleware, (req, res) => {
         }
 
         db.query(
-          `SELECT Score, Total FROM QuizScores
+          `SELECT Score, Total FROM quizscores
            WHERE UserID = ? AND QuizName = ?
            ORDER BY ScoreID DESC LIMIT 1`,
           [user_id, quizName],
           (err2, scoreRes) => {
             if (err2) {
-              console.error("DB error select QuizScores:", err2);
+              console.error("DB error select quizscores:", err2);
               return res.json({
                 answerId: results[0].AnswerID,
                 questions,
@@ -174,13 +174,13 @@ router.get("/user/:userId/:quizName", authMiddleware, (req, res) => {
 
   db.query(
     `SELECT AnswerID, Answers, SubmittedAt
-     FROM QuizUserAnswers
+     FROM quizuseranswers
      WHERE UserID = ? AND QuizName = ?
      ORDER BY SubmittedAt DESC LIMIT 1`,
     [user_id, quizName],
     (err, results) => {
       if (err) {
-        console.error("DB error select QuizUserAnswers (teacher):", err);
+        console.error("DB error select quizuseranswers (teacher):", err);
         return res.status(500).json({ error: "DB error", details: err.message });
       }
       if (!results || !results.length) return res.status(404).json({ error: "No answers found" });
@@ -195,13 +195,13 @@ router.get("/user/:userId/:quizName", authMiddleware, (req, res) => {
         }
 
         db.query(
-          `SELECT Score, Total FROM QuizScores
+          `SELECT Score, Total FROM quizscores
            WHERE UserID = ? AND QuizName = ?
            ORDER BY ScoreID DESC LIMIT 1`,
           [user_id, quizName],
           (err2, scoreRes) => {
             if (err2) {
-              console.error("DB error select QuizScores (teacher):", err2);
+              console.error("DB error select quizscores (teacher):", err2);
               return res.json({
                 answerId: results[0].AnswerID,
                 questions,
@@ -257,7 +257,7 @@ router.post("/grade/:answerId", authMiddleware, (req, res) => {
   const answerId = req.params.answerId;
   if (Score == null) return res.status(400).json({ error: "Missing Score" });
 
-  db.query("SELECT UserID, QuizName FROM QuizUserAnswers WHERE AnswerID = ?", [answerId], (err, results) => {
+  db.query("SELECT UserID, QuizName FROM quizuseranswers WHERE AnswerID = ?", [answerId], (err, results) => {
     if (err) {
       console.error("DB error select submission for grading:", err);
       return res.status(500).json({ error: "DB error", details: err.message });
@@ -285,11 +285,11 @@ router.post("/grade/:answerId", authMiddleware, (req, res) => {
 
       // Update existing score for the same user+quiz if present; otherwise insert.
       db.query(
-        "UPDATE QuizScores SET Score = ?, Total = ? WHERE UserID = ? AND QuizName = ?",
+        "UPDATE quizscores SET Score = ?, Total = ? WHERE UserID = ? AND QuizName = ?",
         [clampedScore, insertTotal, UserID, QuizName],
         (err3, result3) => {
           if (err3) {
-            console.error("DB error update QuizScores:", err3);
+            console.error("DB error update quizscores:", err3);
             return res.status(500).json({ error: "DB error", details: err3.message });
           }
 
@@ -298,11 +298,11 @@ router.post("/grade/:answerId", authMiddleware, (req, res) => {
           }
 
           db.query(
-            "INSERT INTO QuizScores (UserID, QuizName, Score, Total) VALUES (?, ?, ?, ?)",
+            "INSERT INTO quizscores (UserID, QuizName, Score, Total) VALUES (?, ?, ?, ?)",
             [UserID, QuizName, clampedScore, insertTotal],
             (err4, result4) => {
               if (err4) {
-                console.error("DB error insert QuizScores:", err4);
+                console.error("DB error insert quizscores:", err4);
                 return res.status(500).json({ error: "DB error", details: err4.message });
               }
               return res.json({ message: "Score saved", scoreId: result4.insertId });

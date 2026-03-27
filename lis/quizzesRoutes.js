@@ -20,7 +20,7 @@ router.get('/questions', async (req, res) => {
 
   try {
     const [rows] = await pool.query(
-      'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM Quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC',
+      'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM quizzes WHERE QuizName = ? ORDER BY QuestionOrder ASC, QuizID ASC',
       [quizName]
     );
 
@@ -45,7 +45,7 @@ router.get('/questions', async (req, res) => {
 // GET /api/quizzes/list
 router.get('/list', async (req, res) => {
   try {
-    const [rows] = await pool.query('SELECT DISTINCT QuizName FROM Quizzes ORDER BY QuizName ASC');
+    const [rows] = await pool.query('SELECT DISTINCT QuizName FROM quizzes ORDER BY QuizName ASC');
     const quizNames = rows.map(r => r.QuizName);
     return res.json({ quizzes: quizNames });
   } catch (err) {
@@ -59,7 +59,7 @@ router.get('/questions/:id', async (req, res) => {
   const id = req.params.id;
   try {
     const [rows] = await pool.query(
-      'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM Quizzes WHERE QuizID = ?',
+      'SELECT QuizID, QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder FROM quizzes WHERE QuizID = ?',
       [id]
     );
     if (!rows[0]) return res.status(404).json({ error: 'not found' });
@@ -89,7 +89,7 @@ router.post('/questions', async (req, res) => {
 
   try {
     const [result] = await pool.query(
-      'INSERT INTO Quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO quizzes (QuizName, QuestionText, OptionsJSON, AnswerJSON, QuestionType, TotalPoints, QuestionOrder) VALUES (?, ?, ?, ?, ?, ?, ?)',
       [
         QuizName,
         QuestionText,
@@ -114,7 +114,7 @@ router.post('/submit', async (req, res) => {
 
   try {
     await pool.query(
-      'INSERT INTO QuizUserAnswers (UserID, QuizName, Questions, Answers) VALUES (?, ?, ?, ?)',
+      'INSERT INTO quizuseranswers (UserID, QuizName, Questions, Answers) VALUES (?, ?, ?, ?)',
       [UserID, QuizName, JSON.stringify(Questions), JSON.stringify(Answers)]
     );
     return res.status(201).json({ ok: true });

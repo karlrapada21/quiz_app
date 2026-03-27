@@ -66,18 +66,39 @@ const initDatabase = async () => {
             
             if (fs.existsSync(sqlPath)) {
                 let sql = fs.readFileSync(sqlPath, 'utf8');
-                console.log('SQL file found, executing...');
+                console.log('SQL file found, size:', sql.length, 'bytes');
+                
+                // Add USE database statement at the beginning to ensure we're in the right schema
+                const dbInitSql = `USE \`${actualDbName}\`;\n${sql}`;
                 
                 try {
                     // Execute the entire SQL script at once (multipleStatements is enabled)
-                    await connection.promise().query(sql);
+                    console.log('Executing SQL script...');
+                    await connection.promise().query(dbInitSql);
+                    console.log('SQL script executed successfully');
+                    
+                    // Verify tables were created
+                    const [verifyRows] = await connection.promise().query(
+                        `SELECT table_name FROM information_schema.tables WHERE table_schema = ? AND table_type = 'BASE TABLE'`,
+                        [actualDbName]
+                    );
+                    console.log(`Verified ${verifyRows.length} tables created:`);
+                    verifyRows.forEach(t => console.log('  -', t.TABLE_NAME));
+                    
+                    if (verifyRows.length === 0) {
+                        throw new Error('Tables were not created successfully');
+                    }
+                    
                     console.log('Database initialized successfully!');
                 } catch (sqlErr) {
                     console.error('SQL execution error:', sqlErr.message);
+                    console.error('SQL Error Code:', sqlErr.code);
+                    console.error('SQL State:', sqlErr.sqlState);
                     throw sqlErr;
                 }
             } else {
                 console.error('No SQL script found at:', sqlPath);
+                throw new Error('init.sql file not found');
             }
         } else {
             console.log(`Database already has ${rows[0].count} tables, skipping initialization`);

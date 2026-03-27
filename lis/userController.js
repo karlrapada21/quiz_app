@@ -13,7 +13,7 @@ exports.addUser = async (req, res) => {
 
   // Check if email already exists
   db.query(
-    "SELECT UserID FROM Users WHERE Email = ?",
+    "SELECT UserID FROM users WHERE Email = ?",
     [Email],
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
@@ -23,7 +23,7 @@ exports.addUser = async (req, res) => {
 
       // Check if username already exists
       db.query(
-        "SELECT UserID FROM Users WHERE UserName = ?",
+        "SELECT UserID FROM users WHERE UserName = ?",
         [UserName],
         (err, results) => {
           if (err) return res.status(500).json({ message: err.message });
@@ -33,7 +33,7 @@ exports.addUser = async (req, res) => {
 
           // If both email and username are unique, insert the user
           db.query(
-            "INSERT INTO Users (FirstName, MiddleName, LastName, Email, UserName, Password, Role) VALUES (?, ?, ?, ?, ?, ?, ?)",
+            "INSERT INTO users (FirstName, MiddleName, LastName, Email, UserName, Password, Role) VALUES (?, ?, ?, ?, ?, ?, ?)",
             [FirstName, MiddleName, LastName, Email, UserName, hashPassword, roleValue],
             (err) => {
               if (err) return res.status(500).json({ message: err.message });
@@ -50,7 +50,7 @@ exports.addUser = async (req, res) => {
 // View all users
 exports.viewUsers = (req, res) => {
   db.query(
-    "SELECT UserID, FirstName, MiddleName, LastName, Email, UserName, Role FROM Users WHERE Role = 'student' ORDER BY UserID DESC",
+    "SELECT UserID, FirstName, MiddleName, LastName, Email, UserName, Role FROM users WHERE Role = 'student' ORDER BY UserID DESC",
     (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
       res.status(200).json({ results });
@@ -109,7 +109,7 @@ exports.loginUser = (req, res) => {
   const { UserName, Password } = req.body;
 
   db.query(
-    "SELECT * FROM Users WHERE UserName = ?",
+    "SELECT * FROM users WHERE UserName = ?",
     [UserName],
     async (err, results) => {
       if (err) return res.status(500).json({ message: err.message });
@@ -137,13 +137,13 @@ exports.loginUser = (req, res) => {
 
 exports.forgotPassword = async (req, res) => {
   const { email } = req.body;
-  db.query("SELECT UserID FROM Users WHERE Email = ?", [email], async (err, results) => {
+  db.query("SELECT UserID FROM users WHERE Email = ?", [email], async (err, results) => {
         if (results && results.length > 0) {
             const userId = results[0].UserID;
             const token = crypto.randomBytes(32).toString("hex");
             const expiresAt = new Date(Date.now() + 3600000); // 1 hour
             db.query(
-                "INSERT INTO PasswordResetTokens (userId, userType, token, expiresAt) VALUES (?, 'user', ?, ?)",
+                "INSERT INTO passwordresettokens (userId, userType, token, expiresAt) VALUES (?, 'user', ?, ?)",
                 [userId, token, expiresAt],
                 async (err2) => {
                     if (!err2) {
@@ -173,14 +173,14 @@ exports.forgotPassword = async (req, res) => {
 exports.resetPassword = async (req, res) => {
   const { token, newPassword } = req.body;
   db.query(
-    "SELECT * FROM PasswordResetTokens WHERE token = ? AND userType = 'user' AND expiresAt > NOW()",
+    "SELECT * FROM passwordresettokens WHERE token = ? AND userType = 'user' AND expiresAt > NOW()",
     [token],
     async (err, results) => {
             if (err || results.length === 0) return res.status(400).json({ message: "Invalid or expired token" });
             const userId = results[0].userId;
             const hashPassword = await bcrypt.hash(newPassword, 10);
-            db.query("UPDATE Users SET Password = ? WHERE UserID = ?", [hashPassword, userId]);
-            db.query("DELETE FROM PasswordResetTokens WHERE token = ?", [token]);
+            db.query("UPDATE users SET Password = ? WHERE UserID = ?", [hashPassword, userId]);
+            db.query("DELETE FROM passwordresettokens WHERE token = ?", [token]);
             res.json({ message: "Password has been reset." });
         }
     );
