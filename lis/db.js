@@ -13,7 +13,10 @@ const getDbConfig = () => {
             password: url.password,
             database: url.pathname.replace('/', '') || 'railway',
             port: parseInt(url.port) || 3306,
-            ssl: { rejectUnauthorized: false } // Required for Railway
+            ssl: { rejectUnauthorized: false }, // Required for Railway
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0
         };
     }
     // Otherwise use individual Railway environment variables or local variables
@@ -22,7 +25,10 @@ const getDbConfig = () => {
         user: process.env.MYSQLUSER || process.env.DB_USER || "root",
         password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || "",
         database: process.env.MYSQLDATABASE || process.env.DB_NAME || "quizapp_db",
-        port: process.env.MYSQLPORT || 3306
+        port: process.env.MYSQLPORT || 3306,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
     };
     console.log(`Using database connection to: ${config.database}`);
     return config;
@@ -36,22 +42,39 @@ console.log('DB Config (hiding password):', {
     port: dbConfig.port 
 });
 
-const db = mysql.createConnection(dbConfig);
+// Use connection pool instead of single connection for better reliability
+// Pool automatically handles reconnection when connections are lost
+const pool = mysql.createPool(dbConfig);
 
-db.connect(err => {
+// Test the connection
+pool.getConnection((err, connection) => {
     if (err) {
         console.error("Database connection failed:", err.message);
     } else {
         console.log("Successfully connected to MySQL database:", dbConfig.database);
         // Verify actual database
-        db.query('SELECT DATABASE() as current_db', (err, results) => {
+        connection.query('SELECT DATABASE() as current_db', (err, results) => {
             if (err) {
                 console.error('Error checking current database:', err);
             } else {
                 console.log('Current database:', results[0].current_db);
             }
+            connection.release(); // Release back to pool
         });
     }
 });
+
+// Export pool with query method that matches the callback-style interface
+// used throughout the codebase (userController.js, quizAnswersRoutes.js)
+const db = {
+    query: (sql, params, callback) => {
+        // Handle both (sql, callback) and (sql, params, callback) signatures
+        if (typeof params === 'function') {
+            callback = params;
+            params = [];
+        }
+        pool.query(sql, params, callback);
+    }
+};
 
 module.exports = db;

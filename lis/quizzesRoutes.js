@@ -3,10 +3,13 @@ const router = express.Router();
 const mysql = require('mysql2');
 require('dotenv').config();
 
-// Support Railway's MySQL connection format (same as db.js)
+// Import shared database pool from db.js for consistent connection management
+// Note: We still create a promise-based pool here for async/await support
+const db = require('./db');
+
+// Create a promise-based pool for async/await queries
 const getDbConfig = () => {
     if (process.env.MYSQL_URL) {
-        console.log("quizzesRoutes: Using Railway MYSQL_URL");
         const url = new URL(process.env.MYSQL_URL);
         return {
             host: url.hostname,
@@ -14,20 +17,25 @@ const getDbConfig = () => {
             password: url.password,
             database: url.pathname.replace('/', '') || 'railway',
             port: parseInt(url.port) || 3306,
-            ssl: { rejectUnauthorized: false }
+            ssl: { rejectUnauthorized: false },
+            waitForConnections: true,
+            connectionLimit: 10,
+            queueLimit: 0
         };
     }
-    const config = {
+    return {
         host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
         user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
         password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
         database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'quizapp_db',
-        port: process.env.MYSQLPORT || 3306
+        port: process.env.MYSQLPORT || 3306,
+        waitForConnections: true,
+        connectionLimit: 10,
+        queueLimit: 0
     };
-    console.log(`quizzesRoutes: Using database: ${config.database}`);
-    return config;
 };
 
+// Use connection pool with promise wrapper for async/await support
 const pool = mysql.createPool(getDbConfig()).promise();
 
 // GET /api/quizzes/questions?quiz=Quiz+Name
