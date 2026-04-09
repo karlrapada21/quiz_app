@@ -31,13 +31,18 @@ const initDatabase = async () => {
     
     // Create connection based on config type
     if (dbConfig.uri) {
-        // Railway: Use URI directly
-        connection = mysql.createConnection({ uri: dbConfig.uri, multipleStatements: true });
+        // Railway: Use URI directly with SSL
+        connection = mysql.createConnection({ 
+            uri: dbConfig.uri, 
+            multipleStatements: true,
+            ssl: { rejectUnauthorized: false }, // Required for Railway
+            connectTimeout: 30000 // 30 second timeout
+        });
         dbName = dbConfig.database;
         console.log('Connecting to Railway MySQL database:', dbName);
     } else {
         // Local: Connect without database first to create it if needed
-        const tempConfig = { ...dbConfig, multipleStatements: true };
+        const tempConfig = { ...dbConfig, multipleStatements: true, connectTimeout: 30000 };
         delete tempConfig.database;
         connection = mysql.createConnection(tempConfig);
         dbName = dbConfig.database;
