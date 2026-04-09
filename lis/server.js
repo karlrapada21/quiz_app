@@ -63,20 +63,19 @@ app.get("*", (req, res) => {
 
 const PORT = process.env.PORT || 8000;
 
-// Initialize database before starting server
-const startServer = async () => {
-  try {
-    // Initialize database tables
-    await initDatabase();
-    
-    // Start server
-    app.listen(PORT, () => {
-      console.log(`Server running on port ${PORT}`);
-    });
-  } catch (err) {
-    console.error('Failed to start server:', err.message);
-    process.exit(1);
-  }
-};
+// Start server immediately so health check endpoint is available
+// Then initialize database in the background
+const server = app.listen(PORT, () => {
+  console.log(`Server running on port ${PORT}`);
+});
 
-startServer();
+// Initialize database after server starts (non-blocking for health checks)
+initDatabase()
+  .then(() => {
+    console.log('Database initialization completed');
+  })
+  .catch((err) => {
+    console.error('Database initialization failed:', err.message);
+    // Don't exit - server stays running for health checks
+    // API routes will handle DB errors gracefully
+  });
