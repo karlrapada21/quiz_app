@@ -5,26 +5,45 @@ require('dotenv').config();
 
 // Support Railway's MySQL connection format
 const getDbConfig = () => {
-    // For Railway with MYSQL_URL
-    if (process.env.MYSQL_URL) {
-        // Parse the URL to extract database name
-        const url = new URL(process.env.MYSQL_URL);
-        return {
-            uri: process.env.MYSQL_URL,
-            database: url.pathname.replace('/', '') || 'railway'
-        };
+    // Try various Railway MySQL URL formats
+    const mysqlUrl = process.env.MYSQL_URL || process.env.DATABASE_URL || process.env.MYSQLDATABASE_URL;
+    
+    if (mysqlUrl) {
+        try {
+            // Parse the URL to extract database name
+            const url = new URL(mysqlUrl);
+            console.log('Parsed MySQL URL - host:', url.hostname, 'port:', url.port, 'database:', url.pathname);
+            return {
+                uri: mysqlUrl,
+                database: url.pathname.replace('/', '') || 'railway'
+            };
+        } catch (e) {
+            console.error('Failed to parse MySQL URL:', e.message);
+        }
     }
-    return {
-        host: process.env.MYSQLHOST || process.env.DB_HOST || 'localhost',
-        user: process.env.MYSQLUSER || process.env.DB_USER || 'root',
-        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || '',
-        database: process.env.MYSQLDATABASE || process.env.DB_NAME || 'quizapp_db',
-        port: process.env.MYSQLPORT || 3306
+    
+    // Individual environment variables (Railway format or local)
+    const config = {
+        host: process.env.MYSQLHOST || process.env.MYSQL_HOST || process.env.DB_HOST || 'localhost',
+        user: process.env.MYSQLUSER || process.env.MYSQL_USER || process.env.DB_USER || 'root',
+        password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || '',
+        database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME || 'quizapp_db',
+        port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT) || 3306
     };
+    
+    return config;
 };
 
 const initDatabase = async () => {
     const dbConfig = getDbConfig();
+    
+    // Log configuration for debugging (hide password)
+    console.log('Database config:', {
+        hasUri: !!dbConfig.uri,
+        database: dbConfig.database,
+        host: dbConfig.host || 'from URI',
+        port: dbConfig.port || 'from URI'
+    });
     
     let connection;
     let dbName;
@@ -32,23 +51,29 @@ const initDatabase = async () => {
     // Create connection based on config type
     if (dbConfig.uri) {
         // Railway: Use URI directly with SSL
+        console.log('Creating connection with URI (Railway mode)...');
         connection = mysql.createConnection({ 
             uri: dbConfig.uri, 
             multipleStatements: true,
             ssl: { rejectUnauthorized: false }, // Required for Railway
-            connectTimeout: 30000 // 30 second timeout
+            connectTimeout: 60000, // 60 second timeout
+            acquireTimeout: 60000,
+            timeout: 60000
         });
         dbName = dbConfig.database;
         console.log('Connecting to Railway MySQL database:', dbName);
     } else {
         // Local: Connect without database first to create it if needed
-        const tempConfig = { ...dbConfig, multipleStatements: true, connectTimeout: 30000 };
+        console.log('Creating connection with individual params (Local mode)...');
+        const tempConfig = { ...dbConfig, multipleStatements: true, connectTimeout: 60000 };
         delete tempConfig.database;
         connection = mysql.createConnection(tempConfig);
         dbName = dbConfig.database;
     }
     
     try {
+        // Test connection first
+        console.log('Testing database connection...');
         // Get the actual database name from the connection
         const [dbRows] = await connection.promise().query('SELECT DATABASE() as current_db');
         const actualDbName = dbRows[0].current_db;
@@ -119,10 +144,18 @@ const initDatabase = async () => {
         return true;
     } catch (err) {
         console.error('Database initialization error:', err.message);
-        console.error('Stack:', err.stack);
+        console.error('Error code:', err.code);
+        console.error('Error errno:', err.errno);
         throw err; // Re-throw to signal failure
     } finally {
-        connection.end();
+        // Safely close connection
+        try {
+            if (connection && connection.end) {
+                connection.end();
+            }
+        } catch (closeErr) {
+            console.log('Connection already closed or error closing:', closeErr.message);
+        }
     }
 };
 

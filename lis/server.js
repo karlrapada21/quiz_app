@@ -62,20 +62,38 @@ app.get("*", (req, res) => {
 });
 
 const PORT = process.env.PORT || 8000;
+const HOST = '0.0.0.0'; // Required for Railway - must bind to all interfaces
+
+// Log all available MySQL-related environment variables for debugging
+console.log('=== Environment Variables Debug ===');
+console.log('MYSQL_URL exists:', !!process.env.MYSQL_URL);
+console.log('DATABASE_URL exists:', !!process.env.DATABASE_URL);
+console.log('MYSQLDATABASE_URL exists:', !!process.env.MYSQLDATABASE_URL);
+console.log('MYSQLHOST:', process.env.MYSQLHOST);
+console.log('MYSQLPORT:', process.env.MYSQLPORT);
+console.log('MYSQLUSER:', process.env.MYSQLUSER);
+console.log('MYSQLDATABASE:', process.env.MYSQLDATABASE);
+console.log('PORT:', process.env.PORT);
+console.log('================================');
 
 // Start server immediately so health check endpoint is available
-// Then initialize database in the background
-const server = app.listen(PORT, () => {
-  console.log(`Server running on port ${PORT}`);
+// Bind to 0.0.0.0 which is required for Railway/Cloud deployments
+const server = app.listen(PORT, HOST, () => {
+  console.log(`Server running on ${HOST}:${PORT}`);
+  console.log(`Health check available at /health`);
 });
 
 // Initialize database after server starts (non-blocking for health checks)
-initDatabase()
-  .then(() => {
-    console.log('Database initialization completed');
-  })
-  .catch((err) => {
-    console.error('Database initialization failed:', err.message);
-    // Don't exit - server stays running for health checks
-    // API routes will handle DB errors gracefully
-  });
+// Add a small delay to ensure server is fully ready
+setTimeout(() => {
+  console.log('Starting database initialization...');
+  initDatabase()
+    .then(() => {
+      console.log('Database initialization completed');
+    })
+    .catch((err) => {
+      console.error('Database initialization failed:', err.message);
+      console.error('The server will continue running but API routes may not work.');
+      // Don't exit - server stays running for health checks
+    });
+}, 1000); // 1 second delay to ensure server is ready first

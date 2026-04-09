@@ -3,32 +3,43 @@ require("dotenv").config();
 
 // Support Railway's MySQL connection format
 const getDbConfig = () => {
-    // If Railway provides MYSQL_URL, parse it properly
-    if (process.env.MYSQL_URL) {
-        console.log("Using Railway MYSQL_URL for connection");
-        const url = new URL(process.env.MYSQL_URL);
-        return {
-            host: url.hostname,
-            user: url.username,
-            password: url.password,
-            database: url.pathname.replace('/', '') || 'railway',
-            port: parseInt(url.port) || 3306,
-            ssl: { rejectUnauthorized: false }, // Required for Railway
-            waitForConnections: true,
-            connectionLimit: 10,
-            queueLimit: 0
-        };
+    // Try various Railway MySQL URL formats
+    const mysqlUrl = process.env.MYSQL_URL || process.env.DATABASE_URL || process.env.MYSQLDATABASE_URL;
+    
+    if (mysqlUrl) {
+        console.log("Using MySQL URL for connection");
+        try {
+            const url = new URL(mysqlUrl);
+            return {
+                host: url.hostname,
+                user: url.username,
+                password: url.password,
+                database: url.pathname.replace('/', '') || 'railway',
+                port: parseInt(url.port) || 3306,
+                ssl: { rejectUnauthorized: false }, // Required for Railway
+                waitForConnections: true,
+                connectionLimit: 10,
+                queueLimit: 0,
+                connectTimeout: 60000,
+                acquireTimeout: 60000
+            };
+        } catch (e) {
+            console.error('Failed to parse MySQL URL:', e.message);
+        }
     }
-    // Otherwise use individual Railway environment variables or local variables
+    
+    // Individual environment variables (Railway format or local)
     const config = {
-        host: process.env.MYSQLHOST || process.env.DB_HOST || "localhost",
-        user: process.env.MYSQLUSER || process.env.DB_USER || "root",
-        password: process.env.MYSQLPASSWORD || process.env.DB_PASSWORD || "",
-        database: process.env.MYSQLDATABASE || process.env.DB_NAME || "quizapp_db",
-        port: process.env.MYSQLPORT || 3306,
+        host: process.env.MYSQLHOST || process.env.MYSQL_HOST || process.env.DB_HOST || "localhost",
+        user: process.env.MYSQLUSER || process.env.MYSQL_USER || process.env.DB_USER || "root",
+        password: process.env.MYSQLPASSWORD || process.env.MYSQL_PASSWORD || process.env.DB_PASSWORD || "",
+        database: process.env.MYSQLDATABASE || process.env.MYSQL_DATABASE || process.env.DB_NAME || "quizapp_db",
+        port: parseInt(process.env.MYSQLPORT || process.env.MYSQL_PORT) || 3306,
         waitForConnections: true,
         connectionLimit: 10,
-        queueLimit: 0
+        queueLimit: 0,
+        connectTimeout: 60000,
+        acquireTimeout: 60000
     };
     console.log(`Using database connection to: ${config.database}`);
     return config;
