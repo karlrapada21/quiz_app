@@ -2,8 +2,8 @@
 builder = "RAILPACK"
 
 [deploy]
-startCommand = "cd lis && npm start"
+startCommand = "npm run start"
 healthcheckPath = "/health"
-healthcheckTimeout = 100
+healthcheckTimeout = 300
 restartPolicyType = "ON_FAILURE"
 restartPolicyMaxRetries = 10
